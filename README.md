@@ -40,7 +40,7 @@ This job looks a lot like `build_app` but it adds some options to be able to dep
 ## publish_image
 In this app scenario, there are two enviroments for deployment.
 `dev` doesn't exist but it is implemented for demonstration.
-`prod` do exist and leverage GitLab pages.
+`prod` do exists and leverage GitLab pages.
 
 There is no need to build a docker image for GitLab pages as it asks for the app artifact. This job purpose is to demo how to use project docker registry.
 
@@ -50,25 +50,6 @@ Note the Dockerfile is copied during `build_app` job in app artifact. The contex
 
 ## deploy_image
 Deploy/push the docker image on a registry and trigger deployment. On a real world context it could trigger a deployment on Kubernetes.
-Create a multistage docker file to build the angular application
-```bash
-
-# Stage 0, "build-stage", based on Node.js, to build and compile the frontend
-FROM node:10.8.0 as build-stage
-WORKDIR /app
-COPY package*.json /app/
-RUN npm install
-COPY ./ /app/
-ARG configuration=production
-RUN npm run build -- --output-path=./dist/out --configuration $configuration
-
-# Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx
-FROM nginx:1.15
-#Copy ci-dashboard-dist
-COPY --from=build-stage /app/dist/out/ /usr/share/nginx/html
-#Copy default nginx configuration
-COPY ./nginx-custom.conf /etc/nginx/conf.d/default.conf
-```
 
 ## pages (aka deploy_prod)
 Merging master don't always means deployment in production. The pipeline only activates this job when a new tag is pushed.
