@@ -3,11 +3,49 @@ stages:
   - build_and_test
   - publish
   - deploy
-  - lint-helm-chart
+  - release
   - release-helm-chart
 
 # Global config for all jobs
 # Could be set in default section, personnal choice here
+# Conditions #
+##############
+
+.if-merge-request-pipeline: &if-merge-request-pipeline
+  if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+.if-default-branch: &if-default-branch
+  if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+.if-stable-release-branch: &if-stable-release-branch
+  if: $CI_COMMIT_REF_NAME =~ /\A[0-9]+-[0-9]+-stable\z/
+
+.if-release-tag: &if-release-tag
+  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$/ && $CI_PROJECT_URL == "https://gitlab.com/gitlab-org/charts/gitlab-runner"'
+
+.if-security-release-tag: &if-security-release-tag
+  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$/ && $CI_PROJECT_URL == "https://gitlab.com/gitlab-org/charts/gitlab-runner"'
+
+
+#########
+# Rules #
+#########
+
+.rules:default:
+  rules:
+  - <<: *if-merge-request-pipeline
+  - <<: *if-default-branch
+  - <<: *if-stable-release-branch
+  - <<: *if-release-tag
+  - <<: *if-security-release-tag
+
+.rules:release:development:
+  rules:
+  - <<: *if-default-branch
+    when: never
+  - <<: *if-merge-request-pipeline
+    when: manual
+
 variables:
   PROJECT_PATH: "$CI_PROJECT_DIR"
   OUTPUT_PATH: "$CI_PROJECT_DIR/artifacts"
@@ -227,73 +265,55 @@ pages:
     changes:
       - .ci/Dockerfile
       
-# Conditions #
-##############
 
-.if-merge-request-pipeline: &if-merge-request-pipeline
-  if: $CI_PIPELINE_SOURCE == "merge_request_event"
-
-.if-default-branch: &if-default-branch
-  if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-
-.if-stable-release-branch: &if-stable-release-branch
-  if: $CI_COMMIT_REF_NAME =~ /\A[0-9]+-[0-9]+-stable\z/
-
-.if-release-tag: &if-release-tag
-  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$/ && $CI_PROJECT_URL == "https://gitlab.com/gitlab-org/charts/gitlab-runner"'
-
-.if-security-release-tag: &if-security-release-tag
-  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$/ && $CI_PROJECT_URL == "https://gitlab.com/gitlab-org/charts/gitlab-runner"'
-
-
-#########
-# Rules #
-#########
-
-.rules:default:
-  rules:
-  - <<: *if-merge-request-pipeline
-  - <<: *if-default-branch
-  - <<: *if-stable-release-branch
-  - <<: *if-release-tag
-  - <<: *if-security-release-tag
-
-.rules:release:development:
-  rules:
-  - <<: *if-default-branch
-    when: never
-  - <<: *if-merge-request-pipeline
-    when: manual
-
-.rules:release:beta:
-  rules:
-  - <<: *if-default-branch
-
-.rules:release:stable:
-  rules:
-  - <<: *if-release-tag
-  - <<: *if-security-release-tag
 
 ####################
- 
-lint-helm:
-  stage: lint-helm-chart
-  name: alpine/helm:3.2.1
-  entrypoint: ["/bin/sh", "-c"]
-variables:
-  HELM_EXPERIMENTAL_OCI: 1
+default:
+  image: registry.gitlab.com/gitlab-org/gitlab-build-images:gitlab-charts-build-base
+  tags:
+  - gitlab-org
+
+release development:
+  extends:
+  - .rules:release:development
+  stage: release
   script:
-    - helm create helloworld
-    - helm lint alertmanager-bot
-release-helm:
-  stage: release-helm-chart
-  name: alpine/helm:3.2.1
-  entrypoint: ["/bin/sh", "-c"]
-variables:
-  HELM_EXPERIMENTAL_OCI: 1
+  - mkdir hello-world
+  - cd hellow-world
+  - helm init --client-only --stable-repo-url=${STABLE_REPO_URL}
+  - helm create helloworld
+  - 'beta_info=$(git describe --long | sed -r "s/v[0-9\.]+(-rc[0-9]+)?-//")'
+  - 'build_time=$(date +%s)'
+  - 'sed -r "s/(version: [0-9\.]+-beta)/\1-${build_time}-${beta_info}/" -i helloworld/Chart.yaml'
+  - 'sed -r "s/appVersion: .*/appVersion: bleeding/" -i Chart.yaml'
+  - 'sed -r "s/imagePullPolicy: IfNotPresent/imagePullPolicy: Always/" -i helloworld/values.yaml'
+  - 'sed -r "s/tag:"" /tag: $CI_COMMIT_TAG/" -i helloworld/values.yaml'
+  -  helm lint helloworld
+  - touch index.yaml 
+  - helm package helloworld
+  - helm repo index hello-world --merge helow-world/ --url ${REPO_URL}
+  - helm registry login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - helm chart save helloworld $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
+  - helm chart push $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
+  artifacts:
+    paths:
+    - gitlab-runner*.tgz
+    expire_in: 7d
+
+release stable:
+  extends:
+  - .rules:release:stable
+  stage: release
+  image: alpine:3.14
   script:
-    - helm registry login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - helm chart save helloworld $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
-    - helm chart push $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
-  only:
-    - tags
+  - apk add --no-cache curl
+  - curl --fail-with-body
+         --request POST
+         --form "token=$CI_JOB_TOKEN"
+         --form ref=master
+         --form "variables[CHART_NAME]=$CI_PROJECT_NAME"
+         --form "variables[RELEASE_REF]=$CI_COMMIT_REF_NAME"
+          $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
+         
+
+
