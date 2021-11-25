@@ -84,6 +84,27 @@ In this scenario, this isn't a big optimisation but it saves job time for sure. 
 
 It's represents a very little improvment for Gitlab runner which takes ~10 sec more to pull images from docker.io registry.
 
-For the `test_app` job, there is no docker image with chromium pre-installed. Using a node:alpine image and install it during `before_script` would slow the job by ~30 sec at each run. This is more efficient to build a complete image before-hand.
+For the `test_app` job, there is no docker image with chromium pre-installed. Using a node:alpine image and install it during `before_script` would slow the job by ~30 sec at each run. This is more efficient to build a complete image beforehand.
 
 The images used by the pipeline are defined in `.ci/Dockerfile` which is a multi-stage Dockerfile for convenience. Whenever this file is changed, the pipeline adds this first job to build the images again and push them to the project docker registry. Then, the following jobs in the pipeline can use the updated images. 
+
+# Distributing Helm Charts via the Gitlab Container Registry
+Creating a Sample Chart and Setup CI
+```
+helm create helloworld
+└── helloworld
+    ├── Chart.yaml
+    ├── charts
+    ├── templates
+    │   ├── NOTES.txt
+    │   ├── _helpers.tpl
+    │   ├── deployment.yaml
+    │   ├── hpa.yaml
+    │   ├── ingress.yaml
+    │   ├── service.yaml
+    │   ├── serviceaccount.yaml
+    │   └── tests
+    │       └── test-connection.yaml
+    └── values.yaml
+```
+
