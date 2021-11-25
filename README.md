@@ -47,7 +47,24 @@ There is no need to build a docker image for GitLab pages as it asks for the app
 A docker image containing the build is produced for `develop` and `master` branches as well as release tags. Only release images are tagged as latest because this is the default when pulling from the registry without specifying a tag.
 
 Note the Dockerfile is copied during `build_app` job in app artifact. The context to build the image is keeped as light as possible.
+```bash 
 
+# Stage 0, "build-stage", based on Node.js, to build and compile the frontend
+FROM node:10.8.0 as build-stage
+WORKDIR /app
+COPY package*.json /app/
+RUN npm install
+COPY ./ /app/
+ARG configuration=production
+RUN npm run build -- --output-path=./dist/out --configuration $configuration
+
+# Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx
+FROM nginx:1.15
+#Copy ci-dashboard-dist
+COPY --from=build-stage /app/dist/out/ /usr/share/nginx/html
+#Copy default nginx configuration
+COPY ./nginx-custom.conf /etc/nginx/conf.d/default.conf
+```
 ## deploy_image
 Deploy/push the docker image on a registry and trigger deployment. On a real world context it could trigger a deployment on Kubernetes.
 
