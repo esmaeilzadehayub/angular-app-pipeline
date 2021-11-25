@@ -1,8 +1,5 @@
 stages:
   - install
-
-  # Build & tests jobs have a similar execution time
-  # Better execute them in parallel
   - build_and_test
   - publish
   - deploy
