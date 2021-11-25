@@ -58,6 +58,7 @@ COPY ./ /app/
 ARG configuration=production
 RUN npm run build -- --output-path=./dist/out --configuration $configuration
 
+
 # Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx
 FROM nginx:1.15
 #Copy ci-dashboard-dist
@@ -65,6 +66,9 @@ COPY --from=build-stage /app/dist/out/ /usr/share/nginx/html
 #Copy default nginx configuration
 COPY ./nginx-custom.conf /etc/nginx/conf.d/default.conf
 ```
+![image](https://user-images.githubusercontent.com/28998255/143480875-09eb1b11-6a39-4606-9cb1-fade4b0ea84d.png)
+
+
 ## deploy_image
 Deploy/push the docker image on a registry and trigger deployment. On a real world context it could trigger a deployment on Kubernetes.
 
