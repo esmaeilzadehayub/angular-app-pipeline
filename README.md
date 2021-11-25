@@ -107,4 +107,35 @@ helm create helloworld
     │       └── test-connection.yaml
     └── values.yaml
 ```
+# publishing charts to a container registry
+This will set up two stages for us: lint-helm-chart and release-helm-chart which will both run inside the alpine/helm docker image
 
+```bash 
+image:
+  name: alpine/helm:3.2.1
+  entrypoint: ["/bin/sh", "-c"]
+variables:
+  HELM_EXPERIMENTAL_OCI: 1
+stages:
+  - lint-helm-chart
+  - release-helm-chart
+lint-helm:
+  stage: lint-helm-chart
+  script:
+    - helm lint alertmanager-bot
+release-helm:
+  stage: release-helm-chart
+  script:
+    - helm registry login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - helm chart save helloworld $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
+    - helm chart push $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
+  only:
+    - tags
+    ```
+    
+push all of these files to our gitlab repositories and publish a new tag to trigger a push to our registry
+```bash
+git commit -am "initial release"
+git tag v0.1.0
+git push && git push --tags
+```
