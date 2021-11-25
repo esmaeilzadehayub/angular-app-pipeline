@@ -1,12 +1,3 @@
-# References:
-# - https://docs.gitlab.com/ee/ci/yaml
-# - https://docs.gitlab.com/ee/ci/variables/README.html#list-all-environment-variables
-
-# Gitlab doesn't have a runner tagged with shell
-# You need to register you PC as a runner
-# - https://docs.gitlab.com/runner/install/
-# - https://docs.gitlab.com/runner/register/index.html
-
 stages:
   - install
 
@@ -15,6 +6,8 @@ stages:
   - build_and_test
   - publish
   - deploy
+  - lint-helm-chart
+  - release-helm-chart
 
 # Global config for all jobs
 # Could be set in default section, personnal choice here
@@ -167,23 +160,21 @@ deploy_image:
 
       Get and run the docker image locally:
       - docker login registry.gitlab.com
-      - docker pull registry.gitlab.com/jbardon/angular-app-pipeline/app
-      - docker run --rm -it -p 4200:80 registry.gitlab.com/jbardon/angular-app-pipeline/app
+      - docker pull $CI_REGISTRY/gitlabUser/angular-app-pipeline/app
+      - docker run --rm -it -p 4200:80 $CI_REGISTRY/gitlabUser/angular-app-pipeline/app
       EOF
   dependencies:
     - build_app
   environment:
     name: prod
-    url: https://gitlab.com/jbardon/angular-app-pipeline/container_registry/1332828
+    url: $CI_REGISTRY/gitlabUser/angular-app-pipeline/container_registry/1332828
   when: manual
   only:
     - develop
     - master
     - tags
 
-# Prod deploys to GitLab Pages
-# - https://docs.gitlab.com/ee/ci/yaml/#pages
-# - https://docs.gitlab.com/ee/user/project/pages/getting_started_part_one.html
+
 pages:
   stage: deploy
   script:
@@ -199,7 +190,7 @@ pages:
   # Setup environments in Operations > Environments
   environment:
     name: prod-gitlab
-    url: https://jbardon.gitlab.io/angular-app-pipeline
+    url: https://example.gitlab.io/angular-app-pipeline
 
   # Not runned automatically by the pipeline
   # Requires to manually start the job in the UI
@@ -212,9 +203,9 @@ pages:
 # It's possible to push an official image to the project docker registry
 # without using this step and the multi-stage Dockerfile:
 # - docker pull node:12-alpine
-# - docker tag node:12-alpine registry.gitlab.com/jbardon/angular-app-pipeline/ci-node:latest
+# - docker tag node:12-alpine $CI_REGISTRY/gitlabUser/angular-app-pipeline/ci-node:latest
 # - docker login registry.gitlab.com
-# - docker push registry.gitlab.com/jbardon/angular-app-pipeline/ci-node:latest
+# - docker push $CI_REGISTRY/gitlabUser/angular-app-pipeline/ci-node:latest
 .update_ci_images:
 
   # Special stage which ensure this job is run first
@@ -239,20 +230,22 @@ pages:
     changes:
       - .ci/Dockerfile
       
-image:
+
+ 
+lint-helm:
+  stage: lint-helm-chart
   name: alpine/helm:3.2.1
   entrypoint: ["/bin/sh", "-c"]
 variables:
   HELM_EXPERIMENTAL_OCI: 1
-stages:
-  - lint-helm-chart
-  - release-helm-chart
-lint-helm:
-  stage: lint-helm-chart
   script:
     - helm lint alertmanager-bot
 release-helm:
   stage: release-helm-chart
+  name: alpine/helm:3.2.1
+  entrypoint: ["/bin/sh", "-c"]
+variables:
+  HELM_EXPERIMENTAL_OCI: 1
   script:
     - helm registry login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - helm chart save helloworld $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
