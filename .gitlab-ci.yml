@@ -4,7 +4,6 @@ stages:
   - publish
   - deploy
   - release
-  - release-helm-chart
 
 # Global config for all jobs
 # Could be set in default section, personnal choice here
