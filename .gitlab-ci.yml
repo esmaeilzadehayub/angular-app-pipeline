@@ -227,7 +227,54 @@ pages:
     changes:
       - .ci/Dockerfile
       
+# Conditions #
+##############
 
+.if-merge-request-pipeline: &if-merge-request-pipeline
+  if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+.if-default-branch: &if-default-branch
+  if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+.if-stable-release-branch: &if-stable-release-branch
+  if: $CI_COMMIT_REF_NAME =~ /\A[0-9]+-[0-9]+-stable\z/
+
+.if-release-tag: &if-release-tag
+  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$/ && $CI_PROJECT_URL == "https://gitlab.com/gitlab-org/charts/gitlab-runner"'
+
+.if-security-release-tag: &if-security-release-tag
+  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$/ && $CI_PROJECT_URL == "https://gitlab.com/gitlab-org/charts/gitlab-runner"'
+
+
+#########
+# Rules #
+#########
+
+.rules:default:
+  rules:
+  - <<: *if-merge-request-pipeline
+  - <<: *if-default-branch
+  - <<: *if-stable-release-branch
+  - <<: *if-release-tag
+  - <<: *if-security-release-tag
+
+.rules:release:development:
+  rules:
+  - <<: *if-default-branch
+    when: never
+  - <<: *if-merge-request-pipeline
+    when: manual
+
+.rules:release:beta:
+  rules:
+  - <<: *if-default-branch
+
+.rules:release:stable:
+  rules:
+  - <<: *if-release-tag
+  - <<: *if-security-release-tag
+
+####################
  
 lint-helm:
   stage: lint-helm-chart
