@@ -283,6 +283,7 @@ lint-helm:
 variables:
   HELM_EXPERIMENTAL_OCI: 1
   script:
+    - helm create helloworld
     - helm lint alertmanager-bot
 release-helm:
   stage: release-helm-chart
