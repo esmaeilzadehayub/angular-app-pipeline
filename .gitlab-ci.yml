@@ -3,7 +3,6 @@ stages:
   - build_and_test
   - publish
   - deploy
-  - multi-stage
   - release-deploy
   - release
 
@@ -199,9 +198,9 @@ pages:
 # without using this step and the multi-stage Dockerfile:
 # - docker pull node:12-alpine
 # - docker tag node:12-alpine $CI_REGISTRY/gitlabUser/angular-app-pipeline/ci-node:latest
-# - docker login registry.gitlab.com
+# - docker login registry
 # - docker push $CI_REGISTRY/gitlabUser/angular-app-pipeline/ci-node:latest
-update_ci_images:
+.update_ci_images:
 
   # Special stage which ensure this job is run first
   stage: multi-stage
