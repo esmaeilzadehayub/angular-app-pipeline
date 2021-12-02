@@ -140,7 +140,7 @@ git push && git push --tags
 
 ```
 # The scenario
-# Pipleline  ![Screenshot from 2021-12-02 12-41-29](https://user-images.githubusercontent.com/28998255/144393352-df098d36-1e9c-4cd0-b550-568dfc127cc2.png)
+![Screenshot from 2021-12-02 12-41-29](https://user-images.githubusercontent.com/28998255/144393352-df098d36-1e9c-4cd0-b550-568dfc127cc2.png)
 ![Screenshot from 2021-12-02 12-43-54](https://user-images.githubusercontent.com/28998255/144393759-30343a50-bab3-47e8-a448-4e88717405c4.png)
 ![Screenshot from 2021-12-02 12-44-15](https://user-images.githubusercontent.com/28998255/144393800-68a11800-bc98-460f-a98b-8b1969cc8d74.png)
 
