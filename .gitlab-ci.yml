@@ -169,29 +169,6 @@ deploy_image:
     - tags
 
 
-pages:
-  stage: deploy
-  script:
-    - mv $APP_GITLAB_OUTPUT_PATH $PROJECT_PATH/public
-  artifacts:
-    paths:
-      - public
-  dependencies:
-    - build_app_gitlab
-
-  # Flags this job to let known GitLab it's
-  # deploying on prod environment
-  # Setup environments in Operations > Environments
-  environment:
-    name: prod-gitlab
-    url: https://example.gitlab.io/angular-app-pipeline
-
-  # Not runned automatically by the pipeline
-  # Requires to manually start the job in the UI
-  when: manual
-  only:
-    - tags
-
 # Updates the CI images defined on .ci folder multi-stage Dockerfile
 #
 # It's possible to push an official image to the project docker registry
