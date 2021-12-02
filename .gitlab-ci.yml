@@ -5,45 +5,6 @@ stages:
   - deploy
   - release
 
-# Global config for all jobs
-# Could be set in default section, personnal choice here
-# Conditions #
-##############
-
-.if-merge-request-pipeline: &if-merge-request-pipeline
-  if: $CI_PIPELINE_SOURCE == "merge_request_event"
-
-.if-default-branch: &if-default-branch
-  if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-
-.if-stable-release-branch: &if-stable-release-branch
-  if: $CI_COMMIT_REF_NAME =~ /\A[0-9]+-[0-9]+-stable\z/
-
-.if-release-tag: &if-release-tag
-  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$/ && $CI_PROJECT_URL == "https://gitlab.com/gitlab-org/charts/gitlab-runner"'
-
-.if-security-release-tag: &if-security-release-tag
-  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$/ && $CI_PROJECT_URL == "https://gitlab.com/gitlab-org/charts/gitlab-runner"'
-
-
-#########
-# Rules #
-#########
-
-.rules:default:
-  rules:
-  - <<: *if-merge-request-pipeline
-  - <<: *if-default-branch
-  - <<: *if-stable-release-branch
-  - <<: *if-release-tag
-  - <<: *if-security-release-tag
-
-.rules:release:development:
-  rules:
-  - <<: *if-default-branch
-    when: never
-  - <<: *if-merge-request-pipeline
-    when: manual
 
 variables:
   PROJECT_PATH: "$CI_PROJECT_DIR"
@@ -267,14 +228,7 @@ pages:
 
 
 ####################
-default:
-  image: registry.gitlab.com/gitlab-org/gitlab-build-images:gitlab-charts-build-base
-  tags:
-  - gitlab-org
-
 release development:
-  extends:
-  - .rules:release:development
   stage: release
   script:
   - mkdir hello-world
@@ -300,8 +254,6 @@ release development:
     expire_in: 7d
 
 release stable:
-  extends:
-  - .rules:release:stable
   stage: release
   image: alpine:3.14
   script:
@@ -313,6 +265,8 @@ release stable:
          --form "variables[CHART_NAME]=$CI_PROJECT_NAME"
          --form "variables[RELEASE_REF]=$CI_COMMIT_REF_NAME"
           $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
+  only:
+    - "*stable*"
          
 
 
