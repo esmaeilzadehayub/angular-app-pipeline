@@ -1,6 +1,5 @@
 # angular-app-pipeline
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 10.1.0.
 It contains a demonstration to build a fully featured GitLab pipeline.
 
 Here is a brief description of the pipeline jobs.
@@ -139,3 +138,4 @@ git commit -am "initial release"
 git tag v0.1.0
 git push && git push --tags
 ```
+![image]![Screenshot from 2021-12-02 12-41-29](https://user-images.githubusercontent.com/28998255/144393352-df098d36-1e9c-4cd0-b550-568dfc127cc2.png)
