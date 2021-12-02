@@ -137,5 +137,18 @@ push all of these files to our gitlab repositories and publish a new tag to trig
 git commit -am "initial release"
 git tag v0.1.0
 git push && git push --tags
+
 ```
-![image]![Screenshot from 2021-12-02 12-41-29](https://user-images.githubusercontent.com/28998255/144393352-df098d36-1e9c-4cd0-b550-568dfc127cc2.png)
+# The scenario
+# Pipleline  ![Screenshot from 2021-12-02 12-41-29](https://user-images.githubusercontent.com/28998255/144393352-df098d36-1e9c-4cd0-b550-568dfc127cc2.png)
+![Screenshot from 2021-12-02 12-43-54](https://user-images.githubusercontent.com/28998255/144393759-30343a50-bab3-47e8-a448-4e88717405c4.png)
+![Screenshot from 2021-12-02 12-44-15](https://user-images.githubusercontent.com/28998255/144393800-68a11800-bc98-460f-a98b-8b1969cc8d74.png)
+
+![Screenshot from 2021-12-02 12-44-33](https://user-images.githubusercontent.com/28998255/144393832-9b46bfa0-256a-46a6-a223-d259fdae93a4.png)
+![Screenshot from 2021-12-02 12-44-59](https://user-images.githubusercontent.com/28998255/144393870-6f09aa9b-e1c5-4085-9188-3c8ab071504e.png)
+
+![Screenshot from 2021-12-02 12-45-52](https://user-images.githubusercontent.com/28998255/144393916-0358e99e-1d7f-46b5-a7c5-34200a35b5d4.png)
+
+
+
+
