@@ -85,7 +85,6 @@ test_app:
 
   # Avoids all pipeline artifacts to be fetched
   dependencies: []
-  extends: .dependencies_cache
 
 build_app:
   stage: build_and_test
