@@ -239,13 +239,15 @@ release development:
   - 'beta_info=$(git describe --long | sed -r "s/v[0-9\.]+(-rc[0-9]+)?-//")'
   - 'build_time=$(date +%s)'
   - 'sed -r "s/(version: [0-9\.]+-beta)/\1-${build_time}-${beta_info}/" -i helloworld/Chart.yaml'
-  - 'sed -r "s/appVersion: .*/appVersion: bleeding/" -i Chart.yaml'
+  - 'sed -r "s/appVersion: .*/appVersion: v2/" -i Chart.yaml'
+  - 'sed -r "s/repository: .*/repository: $CI_REGISTRY /" -i Chart.yaml'
   - 'sed -r "s/imagePullPolicy: IfNotPresent/imagePullPolicy: Always/" -i helloworld/values.yaml'
   - 'sed -r "s/tag:"" /tag: $CI_COMMIT_TAG/" -i helloworld/values.yaml'
+
   -  helm lint helloworld
   - touch index.yaml 
   - helm package helloworld
-  - helm repo index hello-world --merge helow-world/ --url ${REPO_URL}
+  - helm repo index hello-world --merge helow-world/ --url $CI_REGISTRY
   - helm registry login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   - helm chart save hello-world $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
   - helm chart push $CI_REGISTRY/gitlabUser/helloworld:$CI_COMMIT_TAG
