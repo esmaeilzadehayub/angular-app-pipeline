@@ -46,7 +46,6 @@ install_dependencies:
     - yarn ngcc --properties es2015 --create-ivy-entry-points
 
   # Redefine cache to have default pull-push policy
-  extends: .dependencies_cache
   cache:
     policy: pull-push
   only:
